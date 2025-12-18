@@ -1,0 +1,49 @@
+{
+  "project_id": "coreyalejandro/llm-council",
+  "version": "1.0.0",
+  "os_activation": {
+    "status": "activated",
+    "version": "1.0",
+    "governance_mode": "council-governed"
+  },
+  "stack_overrides": {
+    "backend": {
+      "framework": "FastAPI",
+      "language": "Python 3.12+",
+      "justification": "FastAPI preferred for async parallel model orchestration and SSE streaming overhead efficiency over Next.js API routes."
+    },
+    "frontend": {
+      "framework": "React (Vite)",
+      "language": "JavaScript (JSX)",
+      "justification": "Vite selected for rapid HMR and lightweight build compared to Next.js full-stack overhead for a local-first deliberation tool."
+    }
+  },
+  "enforcement_gates": {
+    "step_0": [
+      "USER_PROFILE.md",
+      "ARCHITECTURE.mermaid",
+      "HANDOFF.md",
+      "openmemory.md"
+    ],
+    "governance": {
+      "decision_log": "governance/decision_log.json",
+      "ppp_directory": "PPP/",
+      "thresholds": {
+        "architecture": "unanimous",
+        "logic": "supermajority",
+        "documentation": "majority"
+      }
+    }
+  },
+  "truth_guarantee": {
+    "enforced": true,
+    "required_footer": "Verification & Truth Statement",
+    "banned_hype_terms": [
+      "production-ready",
+      "best-in-class",
+      "robust",
+      "fully-implemented"
+    ]
+  }
+}
+
