@@ -75,4 +75,17 @@
 .conversation-meta {
   color: #999;
   font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.meta-sep {
+  color: #bbb;
+}
+
+.conversation-time {
+  font-family: monospace;
+  color: #888;
 }

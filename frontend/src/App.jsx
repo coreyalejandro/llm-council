@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import { api } from './api';
@@ -9,18 +9,7 @@ function App() {
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [currentConversation, setCurrentConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Load conversations on mount
-  useEffect(() => {
-    loadConversations();
-  }, []);
-
-  // Load conversation details when selected
-  useEffect(() => {
-    if (currentConversationId) {
-      loadConversation(currentConversationId);
-    }
-  }, [currentConversationId]);
+  const abortRef = useRef(null);
 
   const loadConversations = async () => {
     try {
@@ -31,14 +20,39 @@ function App() {
     }
   };
 
-  const loadConversation = async (id) => {
-    try {
-      const conv = await api.getConversation(id);
-      setCurrentConversation(conv);
-    } catch (error) {
-      console.error('Failed to load conversation:', error);
+  // Load conversations on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const convs = await api.listConversations();
+        if (!cancelled) setConversations(convs);
+      } catch (error) {
+        if (!cancelled) console.error('Failed to load conversations:', error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load conversation details when selected
+  useEffect(() => {
+    if (currentConversationId) {
+      let cancelled = false;
+      (async () => {
+        try {
+          const conv = await api.getConversation(currentConversationId);
+          if (!cancelled) setCurrentConversation(conv);
+        } catch (error) {
+          if (!cancelled) console.error('Failed to load conversation:', error);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
-  };
+  }, [currentConversationId]);
 
   const handleNewConversation = async () => {
     try {
@@ -88,6 +102,10 @@ function App() {
         ...prev,
         messages: [...prev.messages, assistantMessage],
       }));
+
+      // Create an abort controller so user can stop the stream
+      const controller = new AbortController();
+      abortRef.current = controller;
 
       // Send message with streaming
       await api.sendMessageStream(currentConversationId, content, (eventType, event) => {
@@ -159,25 +177,51 @@ function App() {
             // Stream complete, reload conversations list
             loadConversations();
             setIsLoading(false);
+            abortRef.current = null;
             break;
 
           case 'error':
             console.error('Stream error:', event.message);
             setIsLoading(false);
+            abortRef.current = null;
             break;
 
           default:
             console.log('Unknown event type:', eventType);
         }
-      });
+      }, controller.signal);
     } catch (error) {
-      console.error('Failed to send message:', error);
-      // Remove optimistic messages on error
-      setCurrentConversation((prev) => ({
-        ...prev,
-        messages: prev.messages.slice(0, -2),
-      }));
-      setIsLoading(false);
+      if (error?.name === 'AbortError') {
+        // User cancelled: keep partial output and mark it cancelled
+        setCurrentConversation((prev) => {
+          const messages = [...prev.messages];
+          const lastMsg = messages[messages.length - 1];
+          if (lastMsg && lastMsg.role === 'assistant') {
+            lastMsg.loading = { stage1: false, stage2: false, stage3: false };
+            if (!lastMsg.stage3) {
+              lastMsg.stage3 = { model: 'cancelled', response: 'Cancelled by user.' };
+            }
+          }
+          return { ...prev, messages };
+        });
+        setIsLoading(false);
+        abortRef.current = null;
+      } else {
+        console.error('Failed to send message:', error);
+        // Remove optimistic messages on error
+        setCurrentConversation((prev) => ({
+          ...prev,
+          messages: prev.messages.slice(0, -2),
+        }));
+        setIsLoading(false);
+        abortRef.current = null;
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
     }
   };
 
@@ -192,6 +236,7 @@ function App() {
       <ChatInterface
         conversation={currentConversation}
         onSendMessage={handleSendMessage}
+        onCancel={handleCancel}
         isLoading={isLoading}
       />
     </div>

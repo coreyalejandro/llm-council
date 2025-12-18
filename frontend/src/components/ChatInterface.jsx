@@ -5,9 +5,26 @@ import Stage2 from './Stage2';
 import Stage3 from './Stage3';
 import './ChatInterface.css';
 
+function formatTimestamp(isoString) {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString(undefined, {
+      month: 'short',
+      day: '2-digit',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
+}
+
 export default function ChatInterface({
   conversation,
   onSendMessage,
+  onCancel,
   isLoading,
 }) {
   const [input, setInput] = useState('');
@@ -20,6 +37,17 @@ export default function ChatInterface({
   useEffect(() => {
     scrollToBottom();
   }, [conversation]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape' && isLoading && typeof onCancel === 'function') {
+        e.preventDefault();
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isLoading, onCancel]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,6 +78,12 @@ export default function ChatInterface({
 
   return (
     <div className="chat-interface">
+      <div className="chat-header">
+        <div className="chat-title">{conversation.title || 'Conversation'}</div>
+        <div className="chat-subtitle">
+          {conversation.created_at ? formatTimestamp(conversation.created_at) : ''}
+        </div>
+      </div>
       <div className="messages-container">
         {conversation.messages.length === 0 ? (
           <div className="empty-state">
@@ -115,6 +149,14 @@ export default function ChatInterface({
           <div className="loading-indicator">
             <div className="spinner"></div>
             <span>Consulting the council...</span>
+            <button
+              type="button"
+              className="stop-button"
+              onClick={onCancel}
+              aria-label="Stop the current run (Escape)"
+            >
+              Stop (Esc)
+            </button>
           </div>
         )}
 

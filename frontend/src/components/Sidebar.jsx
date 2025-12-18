@@ -1,5 +1,20 @@
-import { useState, useEffect } from 'react';
 import './Sidebar.css';
+
+function formatTimestamp(isoString) {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString(undefined, {
+      month: 'short',
+      day: '2-digit',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
+}
 
 export default function Sidebar({
   conversations,
@@ -33,6 +48,12 @@ export default function Sidebar({
               </div>
               <div className="conversation-meta">
                 {conv.message_count} messages
+                {conv.created_at ? (
+                  <>
+                    <span className="meta-sep">•</span>
+                    <span className="conversation-time">{formatTimestamp(conv.created_at)}</span>
+                  </>
+                ) : null}
               </div>
             </div>
           ))

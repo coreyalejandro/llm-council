@@ -6,6 +6,25 @@
   background: #ffffff;
 }
 
+.chat-header {
+  padding: 14px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #ffffff;
+}
+
+.chat-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+}
+
+.chat-subtitle {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #888;
+  font-family: monospace;
+}
+
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -69,6 +88,29 @@
   padding: 16px;
   color: #666;
   font-size: 14px;
+}
+
+.stop-button {
+  margin-left: auto;
+  padding: 8px 14px;
+  background: #fff0f0;
+  border: 1px solid #f0a3a3;
+  border-radius: 8px;
+  color: #8a1f1f;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.stop-button:hover {
+  background: #ffe5e5;
+  border-color: #e77b7b;
+}
+
+.stop-button:active {
+  transform: translateY(1px);
 }
 
 .stage-loading {

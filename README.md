@@ -72,6 +72,7 @@ COUNCIL_MODELS = [
     "google/gemini-3-pro-preview",
     "anthropic/claude-sonnet-4.5",
     "x-ai/grok-4",
+    "moonshotai/kimi-k2",
 ]
 
 CHAIRMAN_MODEL = "google/gemini-3-pro-preview"

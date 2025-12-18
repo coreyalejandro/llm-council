@@ -39,6 +39,8 @@ COUNCIL_MODELS_DEFAULT = [
     "google/gemini-3-pro-preview",
     "anthropic/claude-sonnet-4.5",
     "x-ai/grok-4",
+    # MoonshotAI Kimi family (user called this "Kim3"; verified via OpenRouter models list)
+    "moonshotai/kimi-k2",
 ]
 COUNCIL_MODELS = _env_csv("COUNCIL_MODELS") or COUNCIL_MODELS_DEFAULT
 
