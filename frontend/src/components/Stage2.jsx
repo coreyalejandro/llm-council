@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import CopyButton from './CopyButton';
 import './Stage2.css';
 
 function deAnonymizeText(text, labelToModel) {
@@ -94,8 +95,11 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings, cont
       </div>
 
       <div className="tab-content">
-        <div className="ranking-model">
-          {rankings[activeTab].model}
+        <div className="stage-header-row">
+          <div className="ranking-model">
+            {rankings[activeTab].model}
+          </div>
+          <CopyButton text={rankings[activeTab].ranking || ''} label="Copy evaluation" />
         </div>
         <div className="ranking-content markdown-content">
           <ReactMarkdown>

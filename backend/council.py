@@ -31,7 +31,7 @@ def _maybe_get_context_bundle() -> ContextBundle | None:
         bundle = load_context_bundle(
             COUNCIL_CONTEXT_DIR,
             max_chars=COUNCIL_CONTEXT_MAX_CHARS,
-            exts=[".md"],
+            exts=[".md", ".mdc"],
             allow_absolute=COUNCIL_CONTEXT_ALLOW_ABSOLUTE,
             explicit_files=COUNCIL_CONTEXT_FILES,
         )

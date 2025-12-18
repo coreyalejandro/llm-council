@@ -59,6 +59,18 @@
   font-family: monospace;
 }
 
+.stage-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stage-header-row .model-name {
+  margin-bottom: 0;
+}
+
 .response-text {
   color: #333;
   line-height: 1.6;

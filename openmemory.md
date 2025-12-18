@@ -69,6 +69,11 @@ If the folder is large, set `COUNCIL_CONTEXT_FILES` (comma-separated) to limit t
 
 When enabled, backend responses include `metadata.context` with which files were injected and whether it was truncated.
 
+## UX Notes
+
+- Stage 1/2/3 include **Copy** buttons to copy raw text without manual highlighting.
+- Stage 2 includes a **Context Injection** ON/OFF indicator driven by backend metadata.
+
 ## User Defined Namespaces
 
 - [Leave blank - user populates]

@@ -5,6 +5,36 @@
 echo "Starting LLM Council..."
 echo ""
 
+# Upsert KEY=VALUE into .env without requiring editing.
+# Preserves other lines and avoids printing secrets.
+upsert_env_var() {
+  local key="$1"
+  local val="$2"
+  local tmp
+  tmp="$(mktemp)"
+
+  umask 077
+
+  if [[ -f ".env" ]]; then
+    awk -v k="$key" -v v="$val" '
+      BEGIN { found = 0 }
+      $0 ~ "^" k "=" {
+        print k "=" v
+        found = 1
+        next
+      }
+      { print }
+      END {
+        if (found == 0) print k "=" v
+      }
+    ' .env > "$tmp"
+  else
+    echo "${key}=${val}" > "$tmp"
+  fi
+
+  mv "$tmp" .env
+}
+
 # macOS helper: if key is missing and .env doesn't exist, prompt via native secure dialog
 ensure_env_key() {
   # Only attempt GUI prompt on macOS
@@ -36,13 +66,83 @@ APPLESCRIPT
   fi
 
   # Write .env with restrictive permissions. (File is gitignored.)
-  umask 077
-  cat > .env <<EOF
-OPENROUTER_API_KEY=${KEY}
-EOF
+  upsert_env_var "OPENROUTER_API_KEY" "${KEY}"
 
   # Avoid leaving the key in a shell variable longer than needed.
   unset KEY
+  return 0
+}
+
+ensure_context_config() {
+  # Only attempt GUI prompt on macOS
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    return 0
+  fi
+
+  # If context already configured, don't force anything.
+  if [[ -f ".env" ]] && grep -qE '^COUNCIL_CONTEXT_ENABLED=' .env; then
+    return 0
+  fi
+
+  # Ask whether to configure context injection (non-secret) now.
+  WANT_CFG="$(osascript <<'APPLESCRIPT'
+tell application "System Events"
+  activate
+  try
+    set dlg to display dialog "Set up Context Injection? (Recommended so the Council can read UPOS7VS / zero-shot-build-os docs.)" buttons {"Skip", "Set up"} default button "Set up"
+    return button returned of dlg
+  on error
+    return "Skip"
+  end try
+end tell
+APPLESCRIPT
+)"
+
+  if [[ "${WANT_CFG}" != "Set up" ]]; then
+    return 0
+  fi
+
+  # Let user choose the context source.
+  CHOICE="$(osascript <<'APPLESCRIPT'
+tell application "System Events"
+  activate
+  try
+    set choices to {"UPOS7VS external repo (recommended)", "zero-shot-build-os (in this repo)", "No context"}
+    set picked to choose from list choices with prompt "Choose what docs to inject into the Council prompts:" default items {"UPOS7VS external repo (recommended)"}
+    if picked is false then return ""
+    return item 1 of picked
+  on error
+    return ""
+  end try
+end tell
+APPLESCRIPT
+)"
+
+  if [[ -z "${CHOICE}" ]]; then
+    return 0
+  fi
+
+  # Apply chosen config (non-secret).
+  if [[ "${CHOICE}" == "No context" ]]; then
+    upsert_env_var "COUNCIL_CONTEXT_ENABLED" "false"
+    return 0
+  fi
+
+  upsert_env_var "COUNCIL_CONTEXT_ENABLED" "true"
+  upsert_env_var "COUNCIL_CONTEXT_MAX_CHARS" "25000"
+
+  if [[ "${CHOICE}" == "zero-shot-build-os (in this repo)" ]]; then
+    upsert_env_var "COUNCIL_CONTEXT_ALLOW_ABSOLUTE" "false"
+    upsert_env_var "COUNCIL_CONTEXT_DIR" "zero-shot-build-os"
+    # Clear explicit file list so markdown files in folder are used.
+    upsert_env_var "COUNCIL_CONTEXT_FILES" ""
+    return 0
+  fi
+
+  # Default: UPOS7VS external repo.
+  upsert_env_var "COUNCIL_CONTEXT_ALLOW_ABSOLUTE" "true"
+  upsert_env_var "COUNCIL_CONTEXT_DIR" "\"/Users/coreyalejandro/Library/Mobile Documents/com~apple~CloudDocs/Repos/upos7vs_multiplatform\""
+  upsert_env_var "COUNCIL_CONTEXT_FILES" "HANDOFF.md,openmemory.md,README.md,cursor/rules/upos-7-vs-core.mdc"
   return 0
 }
 
@@ -59,6 +159,9 @@ if [[ -z "${OPENROUTER_API_KEY}" && ! -f ".env" ]]; then
   echo ""
   exit 1
 fi
+
+# Optional: set up context injection without editing files (macOS).
+ensure_context_config || true
 
 # Start backend
 echo "Starting backend on http://localhost:8001..."

@@ -18,6 +18,18 @@
   font-weight: 600;
 }
 
+.stage-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stage-header-row .chairman-label {
+  margin-bottom: 0;
+}
+
 .final-text {
   color: #333;
   line-height: 1.7;

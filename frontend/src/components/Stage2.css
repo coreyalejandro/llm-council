@@ -196,6 +196,18 @@
   margin-bottom: 12px;
 }
 
+.stage-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stage-header-row .ranking-model {
+  margin-bottom: 0;
+}
+
 .ranking-content {
   color: #333;
   line-height: 1.6;
