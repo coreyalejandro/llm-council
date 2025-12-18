@@ -21,11 +21,13 @@ This project was 99% vibe coded as a fun Saturday hack because I wanted to explo
 The project uses [uv](https://docs.astral.sh/uv/) for project management.
 
 **Backend:**
+
 ```bash
 uv sync
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 npm install
@@ -112,25 +114,28 @@ COUNCIL_CONTEXT_FILES=HANDOFF.md,openmemory.md,README.md
 
 ## Running the Application
 
-**Option 1: Use the start script**
+### Option 1: Use the start script
+
 ```bash
 ./start.sh
 ```
 
-**Option 2: Run manually**
+### Option 2: Run manually
 
 Terminal 1 (Backend):
+
 ```bash
 uv run python -m backend.main
 ```
 
 Terminal 2 (Frontend):
+
 ```bash
 cd frontend
 npm run dev
 ```
 
-Then open http://localhost:5173 in your browser.
+Then open <http://localhost:5173> in your browser.
 
 ## Tech Stack
 
