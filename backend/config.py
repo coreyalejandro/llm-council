@@ -33,6 +33,20 @@ def _env_csv(name: str) -> list[str] | None:
     return [p for p in parts if p]
 
 
+# If true, use a free-only council configuration to avoid OpenRouter 402 errors.
+COUNCIL_FREE_MODE = _env_bool("COUNCIL_FREE_MODE", default=False)
+
+# Known free model IDs (OpenRouter ":free" suffix). These are safe defaults when credits are limited.
+FREE_COUNCIL_MODELS_DEFAULT = [
+    "moonshotai/kimi-k2:free",
+    "google/gemini-2.0-flash-exp:free",
+    "mistralai/mistral-small-3.1-24b-instruct:free",
+    "qwen/qwen3-coder:free",
+    "openai/gpt-oss-20b:free",
+]
+FREE_CHAIRMAN_MODEL_DEFAULT = "meta-llama/llama-3.3-70b-instruct:free"
+FREE_TITLE_MODEL_DEFAULT = "google/gemini-2.0-flash-exp:free"
+
 # Council members - list of OpenRouter model identifiers
 COUNCIL_MODELS_DEFAULT = [
     "openai/gpt-5.1",
@@ -42,15 +56,21 @@ COUNCIL_MODELS_DEFAULT = [
     # MoonshotAI Kimi family (user called this "Kim3"; verified via OpenRouter models list)
     "moonshotai/kimi-k2",
 ]
-COUNCIL_MODELS = _env_csv("COUNCIL_MODELS") or COUNCIL_MODELS_DEFAULT
+COUNCIL_MODELS = _env_csv("COUNCIL_MODELS") or (FREE_COUNCIL_MODELS_DEFAULT if COUNCIL_FREE_MODE else COUNCIL_MODELS_DEFAULT)
 
 # Chairman model - synthesizes final response
 CHAIRMAN_MODEL_DEFAULT = "google/gemini-3-pro-preview"
-CHAIRMAN_MODEL = os.getenv("CHAIRMAN_MODEL", CHAIRMAN_MODEL_DEFAULT).strip()
+CHAIRMAN_MODEL = os.getenv(
+    "CHAIRMAN_MODEL",
+    (FREE_CHAIRMAN_MODEL_DEFAULT if COUNCIL_FREE_MODE else CHAIRMAN_MODEL_DEFAULT),
+).strip()
 
 # Model used for title generation
 TITLE_MODEL_DEFAULT = "google/gemini-2.5-flash"
-TITLE_MODEL = os.getenv("TITLE_MODEL", TITLE_MODEL_DEFAULT).strip()
+TITLE_MODEL = os.getenv(
+    "TITLE_MODEL",
+    (FREE_TITLE_MODEL_DEFAULT if COUNCIL_FREE_MODE else TITLE_MODEL_DEFAULT),
+).strip()
 
 # Optional prompt context injection (e.g. zero-shot-build-os docs)
 COUNCIL_CONTEXT_ENABLED = _env_bool("COUNCIL_CONTEXT_ENABLED", default=False)

@@ -64,6 +64,12 @@ and your key is missing, LLM Council will open a **native secure prompt** and cr
 
 You can either edit `backend/config.py` or set environment variables in `.env`.
 
+If you are seeing OpenRouter errors like **402 Payment Required**, you can run in **free-only mode**:
+
+```bash
+COUNCIL_FREE_MODE=true
+```
+
 Default council models:
 
 ```python

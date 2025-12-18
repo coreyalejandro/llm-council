@@ -163,6 +163,41 @@ fi
 # Optional: set up context injection without editing files (macOS).
 ensure_context_config || true
 
+# Free-models mode: avoids 402 Payment Required by switching to known free models.
+ensure_free_models_config() {
+  # Only attempt GUI prompt on macOS
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    return 0
+  fi
+
+  # If user already chose a mode, don't nag.
+  if [[ -f ".env" ]] && grep -qE '^COUNCIL_FREE_MODE=' .env; then
+    return 0
+  fi
+
+  CHOICE="$(osascript <<'APPLESCRIPT'
+tell application "System Events"
+  activate
+  try
+    set dlg to display dialog "Use FREE models only? (Recommended if you see '402 Payment Required'. This sets a free-only council + free chairman.)" buttons {"Skip", "Use Free Models"} default button "Use Free Models"
+    return button returned of dlg
+  on error
+    return "Skip"
+  end try
+end tell
+APPLESCRIPT
+)"
+
+  if [[ "${CHOICE}" == "Use Free Models" ]]; then
+    upsert_env_var "COUNCIL_FREE_MODE" "true"
+  else
+    upsert_env_var "COUNCIL_FREE_MODE" "false"
+  fi
+}
+
+# Optional: switch to free-only models (macOS, no editing).
+ensure_free_models_config || true
+
 # Start backend
 echo "Starting backend on http://localhost:8001..."
 uv run python -m backend.main &
