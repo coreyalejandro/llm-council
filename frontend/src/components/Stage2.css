@@ -13,6 +13,84 @@
   margin-top: 0;
 }
 
+.context-status {
+  background: #fff7e6;
+  border: 2px solid #ffe0a3;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 0 0 14px 0;
+}
+
+.context-status-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7a4a00;
+  margin-bottom: 6px;
+}
+
+.context-status-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.context-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.context-badge-on {
+  background: #e8fff0;
+  border: 1px solid #7bdca0;
+  color: #116b2d;
+}
+
+.context-badge-off {
+  background: #fff0f0;
+  border: 1px solid #f0a3a3;
+  color: #8a1f1f;
+}
+
+.context-status-note {
+  color: #7a4a00;
+  font-size: 13px;
+  line-height: 1.4;
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.context-kv strong {
+  font-weight: 700;
+}
+
+.context-mono {
+  font-family: monospace;
+}
+
+.context-files {
+  margin-top: 10px;
+}
+
+.context-files summary {
+  cursor: pointer;
+  color: #7a4a00;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.context-files ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  color: #7a4a00;
+  font-size: 12px;
+}
+
 .stage-description {
   margin: 0 0 12px 0;
   color: #666;

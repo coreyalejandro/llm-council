@@ -14,16 +14,66 @@ function deAnonymizeText(text, labelToModel) {
   return result;
 }
 
-export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
+export default function Stage2({ rankings, labelToModel, aggregateRankings, context }) {
   const [activeTab, setActiveTab] = useState(0);
 
   if (!rankings || rankings.length === 0) {
     return null;
   }
 
+  const contextEnabled = Boolean(context && context.enabled);
+  const contextDir = context?.dir;
+  const contextFiles = context?.included_files || [];
+  const contextTruncated = Boolean(context?.truncated);
+
   return (
     <div className="stage stage2">
       <h3 className="stage-title">Stage 2: Peer Rankings</h3>
+
+      <div className="context-status">
+        <div className="context-status-title">Context Injection</div>
+        <div className="context-status-body">
+          {contextEnabled ? (
+            <>
+              <span className="context-badge context-badge-on">ON</span>
+              <span className="context-status-note">
+                {contextDir ? (
+                  <>
+                    <span className="context-kv">
+                      <strong>Dir:</strong> <span className="context-mono">{contextDir}</span>
+                    </span>
+                    <span className="context-kv">
+                      <strong>Files:</strong> {contextFiles.length}
+                    </span>
+                    <span className="context-kv">
+                      <strong>Truncated:</strong> {contextTruncated ? 'yes' : 'no'}
+                    </span>
+                  </>
+                ) : (
+                  <>Context enabled.</>
+                )}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="context-badge context-badge-off">OFF</span>
+              <span className="context-status-note">
+                No context was injected for this message.
+              </span>
+            </>
+          )}
+        </div>
+        {contextEnabled && contextFiles.length > 0 && (
+          <details className="context-files">
+            <summary>Show injected files</summary>
+            <ul>
+              {contextFiles.map((f) => (
+                <li key={f} className="context-mono">{f}</li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </div>
 
       <h4>Raw Evaluations</h4>
       <p className="stage-description">
