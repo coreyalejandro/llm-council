@@ -34,7 +34,13 @@ cd ..
 
 ### 2. Configure API Key
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (it is gitignored):
+
+```bash
+cp env.example .env
+```
+
+Then edit `.env` and set:
 
 ```bash
 OPENROUTER_API_KEY=sk-or-v1-...
@@ -44,7 +50,9 @@ Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purcha
 
 ### 3. Configure Models (Optional)
 
-Edit `backend/config.py` to customize the council:
+You can either edit `backend/config.py` or set environment variables in `.env`.
+
+Default council models:
 
 ```python
 COUNCIL_MODELS = [
@@ -55,6 +63,41 @@ COUNCIL_MODELS = [
 ]
 
 CHAIRMAN_MODEL = "google/gemini-3-pro-preview"
+```
+
+Or override via `.env`:
+
+```bash
+COUNCIL_MODELS=openai/gpt-5.1,google/gemini-3-pro-preview,anthropic/claude-sonnet-4.5,x-ai/grok-4
+CHAIRMAN_MODEL=google/gemini-3-pro-preview
+TITLE_MODEL=google/gemini-2.5-flash
+```
+
+### 4. Include Zero‑Shot‑Build OS Context (Optional, Recommended)
+
+This repo includes `zero-shot-build-os/` (UPOS‑7‑VS, REASONS, etc.). You can have the backend automatically inject that documentation into model prompts:
+
+```bash
+COUNCIL_CONTEXT_ENABLED=true
+COUNCIL_CONTEXT_DIR=zero-shot-build-os
+COUNCIL_CONTEXT_MAX_CHARS=25000
+```
+
+### 5. Use an External UPOS7VS Folder as Context (Optional)
+
+If your UPOS7VS repo is **outside** this repo, you can point LLM Council at it, but it’s opt-in for safety:
+
+```bash
+COUNCIL_CONTEXT_ENABLED=true
+COUNCIL_CONTEXT_ALLOW_ABSOLUTE=true
+COUNCIL_CONTEXT_DIR=/Users/coreyalejandro/Library/Mobile\\ Documents/com~apple~CloudDocs/Repos/upos7vs_multiplatform
+COUNCIL_CONTEXT_MAX_CHARS=25000
+```
+
+If the repo is large, prefer limiting to a small set of key files:
+
+```bash
+COUNCIL_CONTEXT_FILES=HANDOFF.md,openmemory.md,README.md
 ```
 
 ## Running the Application

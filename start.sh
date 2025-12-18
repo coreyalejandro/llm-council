@@ -5,6 +5,15 @@
 echo "Starting LLM Council..."
 echo ""
 
+# Fail fast if no API key is available.
+# Note: backend loads .env automatically via python-dotenv.
+if [[ -z "${OPENROUTER_API_KEY}" && ! -f ".env" ]]; then
+  echo "✗ OPENROUTER_API_KEY is not set and .env is missing."
+  echo "  Create a .env file in the project root (see README / env.example)."
+  echo ""
+  exit 1
+fi
+
 # Start backend
 echo "Starting backend on http://localhost:8001..."
 uv run python -m backend.main &

@@ -21,6 +21,13 @@ async def query_model(
     Returns:
         Response dict with 'content' and optional 'reasoning_details', or None if failed
     """
+    if not OPENROUTER_API_KEY:
+        print(
+            "OpenRouter API key is not set (OPENROUTER_API_KEY). "
+            "Create a .env in the project root or export the env var."
+        )
+        return None
+
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",

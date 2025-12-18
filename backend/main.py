@@ -11,6 +11,7 @@ import asyncio
 
 from . import storage
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
+from .config import OPENROUTER_API_KEY
 
 app = FastAPI(title="LLM Council API")
 
@@ -90,6 +91,12 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="OPENROUTER_API_KEY is not set. Create a .env in the project root (see env.example) or export the env var.",
+        )
+
     # Check if this is the first message
     is_first_message = len(conversation["messages"]) == 0
 
@@ -133,6 +140,12 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
     conversation = storage.get_conversation(conversation_id)
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
+
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="OPENROUTER_API_KEY is not set. Create a .env in the project root (see env.example) or export the env var.",
+        )
 
     # Check if this is the first message
     is_first_message = len(conversation["messages"]) == 0

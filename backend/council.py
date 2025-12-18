@@ -2,7 +2,61 @@
 
 from typing import List, Dict, Any, Tuple
 from .openrouter import query_models_parallel, query_model
-from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
+from .config import (
+    COUNCIL_MODELS,
+    CHAIRMAN_MODEL,
+    TITLE_MODEL,
+    COUNCIL_CONTEXT_ENABLED,
+    COUNCIL_CONTEXT_DIR,
+    COUNCIL_CONTEXT_MAX_CHARS,
+    COUNCIL_CONTEXT_ALLOW_ABSOLUTE,
+    COUNCIL_CONTEXT_FILES,
+)
+from .context import ContextBundle, load_context_bundle
+
+_CONTEXT_CACHE: Dict[str, ContextBundle] = {}
+
+
+def _maybe_get_context_bundle() -> ContextBundle | None:
+    if not COUNCIL_CONTEXT_ENABLED:
+        return None
+    if not COUNCIL_CONTEXT_DIR:
+        return None
+
+    cache_key = f"{COUNCIL_CONTEXT_DIR}:{COUNCIL_CONTEXT_MAX_CHARS}"
+    if cache_key in _CONTEXT_CACHE:
+        return _CONTEXT_CACHE[cache_key]
+
+    try:
+        bundle = load_context_bundle(
+            COUNCIL_CONTEXT_DIR,
+            max_chars=COUNCIL_CONTEXT_MAX_CHARS,
+            exts=[".md"],
+            allow_absolute=COUNCIL_CONTEXT_ALLOW_ABSOLUTE,
+            explicit_files=COUNCIL_CONTEXT_FILES,
+        )
+        _CONTEXT_CACHE[cache_key] = bundle
+        return bundle
+    except Exception as e:
+        # Fail open: council still works without local context
+        print(f"Context load failed ({COUNCIL_CONTEXT_DIR}): {e}")
+        return None
+
+
+def _context_system_message(bundle: ContextBundle) -> str:
+    files = "\n".join([f"- {p}" for p in bundle.included_files]) or "- (none)"
+    truncated = "yes" if bundle.truncated else "no"
+    return (
+        "You have access to a local project context bundle. Use it when relevant.\n\n"
+        f"Context dir: {bundle.source_dir}\n"
+        f"Included files:\n{files}\n"
+        f"Truncated: {truncated}\n\n"
+        "Context content:\n"
+        f"{bundle.content}\n\n"
+        "Critical constraints:\n"
+        "- Do NOT invent files, commands, or repo state not present in the context.\n"
+        "- Keep reasoning summaries high-level; do not reveal private chain-of-thought.\n"
+    )
 
 
 async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
@@ -15,7 +69,14 @@ async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
     Returns:
         List of dicts with 'model' and 'response' keys
     """
-    messages = [{"role": "user", "content": user_query}]
+    bundle = _maybe_get_context_bundle()
+    if bundle:
+        messages = [
+            {"role": "system", "content": _context_system_message(bundle)},
+            {"role": "user", "content": user_query},
+        ]
+    else:
+        messages = [{"role": "user", "content": user_query}]
 
     # Query all models in parallel
     responses = await query_models_parallel(COUNCIL_MODELS, messages)
@@ -92,7 +153,21 @@ FINAL RANKING:
 
 Now provide your evaluation and ranking:"""
 
-    messages = [{"role": "user", "content": ranking_prompt}]
+    bundle = _maybe_get_context_bundle()
+    if bundle:
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    _context_system_message(bundle)
+                    + "\n\n"
+                    + "IMPORTANT: You MUST follow the Stage 2 output contract exactly, especially the FINAL RANKING section format."
+                ),
+            },
+            {"role": "user", "content": ranking_prompt},
+        ]
+    else:
+        messages = [{"role": "user", "content": ranking_prompt}]
 
     # Get rankings from all council models in parallel
     responses = await query_models_parallel(COUNCIL_MODELS, messages)
@@ -156,7 +231,14 @@ Your task as Chairman is to synthesize all of this information into a single, co
 
 Provide a clear, well-reasoned final answer that represents the council's collective wisdom:"""
 
-    messages = [{"role": "user", "content": chairman_prompt}]
+    bundle = _maybe_get_context_bundle()
+    if bundle:
+        messages = [
+            {"role": "system", "content": _context_system_message(bundle)},
+            {"role": "user", "content": chairman_prompt},
+        ]
+    else:
+        messages = [{"role": "user", "content": chairman_prompt}]
 
     # Query the chairman model
     response = await query_model(CHAIRMAN_MODEL, messages)
@@ -274,8 +356,8 @@ Title:"""
 
     messages = [{"role": "user", "content": title_prompt}]
 
-    # Use gemini-2.5-flash for title generation (fast and cheap)
-    response = await query_model("google/gemini-2.5-flash", messages, timeout=30.0)
+    # Use a fast/cheap model for title generation (configurable)
+    response = await query_model(TITLE_MODEL, messages, timeout=30.0)
 
     if response is None:
         # Fallback to a generic title
@@ -327,9 +409,20 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
     )
 
     # Prepare metadata
+    bundle = _maybe_get_context_bundle()
     metadata = {
         "label_to_model": label_to_model,
-        "aggregate_rankings": aggregate_rankings
+        "aggregate_rankings": aggregate_rankings,
+        "context": (
+            None
+            if not bundle
+            else {
+                "enabled": True,
+                "dir": bundle.source_dir,
+                "included_files": bundle.included_files,
+                "truncated": bundle.truncated,
+            }
+        ),
     }
 
     return stage1_results, stage2_results, stage3_result, metadata
