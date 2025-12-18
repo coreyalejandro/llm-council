@@ -48,6 +48,16 @@ OPENROUTER_API_KEY=sk-or-v1-...
 
 Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purchase the credits you need, or sign up for automatic top up.
 
+**macOS shortcut (no editor / no copy-paste into code):**
+
+If you just run:
+
+```bash
+./start.sh
+```
+
+and your key is missing, LLM Council will open a **native secure prompt** and create `.env` for you automatically.
+
 ### 3. Configure Models (Optional)
 
 You can either edit `backend/config.py` or set environment variables in `.env`.
